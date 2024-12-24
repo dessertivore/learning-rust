@@ -63,7 +63,7 @@ fn init_router() -> Router {
 async fn main() {
     // build our application with a single route
     let app: Router = init_router();
-    let addr = SocketAddr::from(([0, 0, 0, 0], 3000));
+    let addr = SocketAddr::from(([0, 0, 0, 0], 8000));
     axum_server::bind(addr)
         .serve(app.into_make_service())
         .await

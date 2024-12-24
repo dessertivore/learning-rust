@@ -1,14 +1,6 @@
-[package]
-name = "test_rust_apis"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-axum = "0.7.9"
-tokio = { version = "1.32.0", features = ["full"] }
-hyper = { version = "1.5.2", features = ["full"] }
-axum-server = "0.7.1"
-rand = "0.8.5"
-serde = { version = "1.0", features = ["derive"] }
-log = "0.4.22"
-
+[workspace]
+members = [
+    "api",
+    "client",
+]
+resolver = "2"
