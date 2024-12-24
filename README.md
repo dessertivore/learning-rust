@@ -21,4 +21,5 @@ This will return `The sum of the numbers is 6` after 2 seconds.
 ```sh
 cargo run --bin client
 ```
-This calls the `/colour` endpoint
+This calls the `/colour` endpoint and then the `/addition` endpoint 20 times asynchronously
+in order to test async code in Rust.
