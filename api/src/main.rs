@@ -1,6 +1,6 @@
 use axum::{ extract::Json, routing::{get, post}, Extension, Router};
 use rand::Rng;
-use serde::{Serialize,Deserialize};
+use serde::{ser::SerializeStruct, Deserialize, Serialize};
 use tokio::{task::{self, JoinHandle}, time::{sleep,Duration}, sync::Mutex};
 use std::{cell::{Cell, UnsafeCell}, clone, marker::PhantomData, net::SocketAddr, sync::{atomic::AtomicUsize, Arc}};
 use axum_macros::debug_handler;
@@ -22,20 +22,40 @@ struct NumList {
     nums: String,
 }
 
-#[derive(Copy, Clone, Debug, Default)]
-struct NotSyncMarker(PhantomData<Cell<*mut usize>>);
+// #[derive(Copy, Clone, Debug, Default)]
+// struct NotSyncMarker(PhantomData<Cell<*mut usize>>);
 
 #[derive(Serialize, Deserialize, clone::Clone)]
 struct Counter {
     count: usize,
 }
 
-#[derive(clone::Clone)]
-
 struct UnsafeCounter {
-    counter: Cell<usize>,
-    _marker: NotSyncMarker,
+    counter: UnsafeCell<usize>,
 }
+
+impl Clone for UnsafeCounter {
+    fn clone(&self) -> UnsafeCounter {
+        UnsafeCounter {
+            counter: UnsafeCell::new(unsafe { *self.counter.get() }),
+        }
+    }
+}
+
+
+impl Serialize for UnsafeCounter {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let count = unsafe { *self.counter.get() };
+        let mut state = serializer.serialize_struct("Counter", 1)?;
+        state.serialize_field("count", &count)?;
+        state.end()
+    }
+}
+
+unsafe impl Sync for UnsafeCounter {}
 
 /// This function takes a list of numbers as a JSON payload and returns the sum of 
 /// the numbers, but first, it spawns 20 async tasks that each sleep for 2 seconds.
@@ -67,27 +87,38 @@ async fn add_nums(Json(payload): Json<NumList>) -> String {
 }
 
 // async fn increment_counter(Extension(counter): Extension<Arc<Mutex<Counter>>>) -> Json<Counter> {
-async fn increment_counter(counter: Extension<UnsafeCounter>) -> Json<Extension<UnsafeCounter>> {
-    let counter_ref = counter.counter.get() +1;
-    counter.counter.set(counter_ref);
-    return Json(counter);
-    
+#[debug_handler]
+async fn increment_counter(counter: Extension<Arc<UnsafeCounter>>) -> Json<UnsafeCounter> {
+    let counter_ref = unsafe { &mut *counter.counter.get() };
+    *counter_ref += 1;
+    return Json(UnsafeCounter { counter: UnsafeCell::new(*counter_ref) })
+}
+
+async fn check_counter(counter: Extension<Arc<UnsafeCounter>>) -> () {
+    let counter_ref = unsafe { &mut *counter.counter.get() };
+    print!("{:?}", Json(counter_ref));
 }
 
 /// This function initializes our router with two routes: one for the colour endpoint
 /// and one for the addition endpoint.
 fn init_router() -> Router {
-    let counter = UnsafeCounter{counter: Cell::new(0), _marker: NotSyncMarker(PhantomData)};
+    let counter = Arc::new(UnsafeCounter{counter: UnsafeCell::new(0)});
     return 
     Router::new()
     .route("/colour", get(|| pick_random_colour()))
-    .route("/counter", get(|| increment_counter).layer(Extension(counter)))
+    .route("/counter", get({
+        let counter = counter.clone();
+        move || check_counter(Extension(counter))
+    }))
+    .route("/counter", post({
+        let counter = counter.clone();
+        move || increment_counter(Extension(counter))
+    }))
     .route("/addition", post(add_nums));
 }
 
 /// This is the main function that starts our server.
 #[tokio::main]
-#[debug_handler]
 async fn main() {
     
     // build our application with a Router with multiple routes

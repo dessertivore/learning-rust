@@ -48,7 +48,17 @@ async fn call_addition_endpoint() {
 
 }
 
-async fn call_counter() -> String {
+async fn inc_counter() -> String {
+    let client = reqwest::Client::new();
+    let resp = client
+        .post("http://localhost:8000/counter")
+        .json("")
+        .send()
+        .await
+        .unwrap();
+    return resp.text().await.unwrap();
+}
+async fn check_counter() -> String {
     let resp = reqwest::get("http://localhost:8000/counter").await;
     let body = resp.unwrap().text().await.unwrap();
     return body;
@@ -65,9 +75,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Call addition endpoint and print response to console
     // call_addition_endpoint().await;
     let mut handles = vec![];
-    for i in 0..1000 {
+    for i in 0..10000 {
         let handle = task::spawn(async move {
-            let body = call_counter().await;
+            let body = inc_counter().await;
             println!("Response from /counter: {}. Endpoint has been called {} times.", body, i);
         });
         handles.push(handle);
@@ -76,6 +86,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     for handle in handles {
         handle.await.unwrap();
     }
+    let body = inc_counter().await;
+    println!("Response from /counter at the end: {}", body);
     
 
     Ok(())
