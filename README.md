@@ -21,5 +21,6 @@ This will return `The sum of the numbers is 6` after 2 seconds.
 ```sh
 make client
 ```
-This calls the `/colour` endpoint and then the `/addition` endpoint 20 times asynchronously
-in order to test async code in Rust.
+This calls the `/colour` endpoint then adds to the counter 1000 times with the `/counter`
+POST endpoint. I was trying to elicit race conditions but have failed at that 
+unfortunately. Lastly, it calls `/counter` with a GET request to get the final count.
