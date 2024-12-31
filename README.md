@@ -7,7 +7,7 @@ Current endpoints are:
 
 ## To run the API
 ```sh
-cargo run --bin api
+make api
 curl localhost:3000/colour
 ```
 This will return e.g. `The best colour is blue!` - a random colour is picked each time.
@@ -19,7 +19,7 @@ This will return `The sum of the numbers is 6` after 2 seconds.
 
 ## To call API via Rust
 ```sh
-cargo run --bin client
+make client
 ```
 This calls the `/colour` endpoint and then the `/addition` endpoint 20 times asynchronously
 in order to test async code in Rust.
