@@ -22,9 +22,6 @@ struct NumList {
     nums: String,
 }
 
-// #[derive(Copy, Clone, Debug, Default)]
-// struct NotSyncMarker(PhantomData<Cell<*mut usize>>);
-
 #[derive(Serialize, Deserialize, clone::Clone)]
 struct Counter {
     count: usize,

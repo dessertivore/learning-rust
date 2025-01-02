@@ -1,6 +1,6 @@
 [workspace]
 members = [
     "api",
-    "client",
+    "client", "project-euler",
 ]
 resolver = "2"
