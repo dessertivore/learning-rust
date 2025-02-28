@@ -24,3 +24,10 @@ make client
 This calls the `/colour` endpoint then adds to the counter 1000 times with the `/counter`
 POST endpoint. I was trying to elicit race conditions but have failed at that 
 unfortunately. Lastly, it calls `/counter` with a GET request to get the final count.
+
+# To run Project Euler problems
+```sh
+make euler 1 1000
+```
+This runs project Euler puzzle 1 with the input 1000. Change args as desired.
+Results will print to console.

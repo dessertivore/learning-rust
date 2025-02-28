@@ -1,80 +1,33 @@
-use std::num::NonZeroUsize;
-
-use lru::LruCache;
-
-fn problem_1() {
-    let mut sum = 0;
-    for i in 0..1000 {
-        if i % 3 == 0 || i % 5 == 0 {
-            sum += i;
-        }
-    }
-    println!("The sum of all multiples of 3 or 5 below 1000 is: {}", sum);
-}
-
-fn fib(term: i64, cache: &mut LruCache<i64, i64>) -> i64 {
-    if term == 0 {
-        return 0;
-    }
-    if term == 1 {
-        return 1;
-    }
-    if term == 2 {
-        return 2;
-    } else {
-        if let Some(&result) = cache.get(&term) {
-            return result;
-        }
-        let result = fib(term - 1, cache) + fib(term - 2, cache);
-        cache.put(term, result);
-        result
-    }
-}
-
-fn problem_2(term: i64, cache: &mut LruCache<i64, i64>) -> i64 {
-    let mut sum = 0;
-    let mut fib_num = 0;
-    let mut idx = 0;
-    while fib_num < term {
-        fib_num = fib(idx, cache);
-        if fib_num % 2 == 0 {
-            sum += fib_num;
-        };
-        idx += 1;
-    }
-    return sum;
-}
-
-fn problem_3(mut term: i64) -> i64 {
-    let mut prev_primes = vec![1];
-    let mut current = 3;
-    let mut max_prime = 3;
-    let root = (term as f64).sqrt();
-    let root_as_int = root.round() as i64;
-
-    while term % 2 == 0 {
-        // divide by 2 until it is an odd number
-        term = term / 2;
-    }
-
-    while current <= root_as_int + 1 {
-        if term % current == 0 {
-            // If current num is a factor, divide term by it until no longer a factor
-            while term % current == 0 {
-                term = term / current;
-            }
-            max_prime = current;
-            prev_primes.push(current);
-        }
-        // skip even numbers as our term is an odd number
-        current += 2
-    }
-    return max_prime;
-}
+mod problems;
+use either;
+use std::env;
 
 fn main() {
-    problem_1();
-    let mut cache: LruCache<i64, i64> = LruCache::new(NonZeroUsize::new(2).unwrap());
-    println!("{}", problem_2(4000000, &mut cache));
-    println!("{}", problem_3(600851475143));
+    let args: Vec<String> = env::args().collect();
+    let problem_number: i64 = args[1]
+        .parse::<i64>()
+        .expect("Failed to parse input as i64");
+
+    let cli_problem_input = args[2].parse::<i64>();
+    let problem_input: Option<i64> = match cli_problem_input {
+        Ok(value) => Some(value),
+        Err(_) => None,
+    };
+
+    println!("Solving problem number: {problem_number}");
+    println!("Using problem input: {:?}", problem_input);
+
+    let result: either::Either<&str, i64> = match problem_number {
+        1 => either::Right(problems::problem_1::problem_1(
+            problem_input.unwrap_or(10000),
+        )),
+        2 => either::Right(problems::problem_2::problem_2(
+            problem_input.unwrap_or(4000000),
+        )),
+        3 => either::Right(problems::problem_3::problem_3(
+            problem_input.unwrap_or(600851475143),
+        )),
+        _ => either::Left("Solution not written yet"),
+    };
+    println!("{}", result)
 }
